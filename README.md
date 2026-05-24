@@ -25,6 +25,7 @@ Group 4 — Anita Pitre · Christopher Allen · Jomar Thomas Almonte · Summer 2
 | UI | React Native Paper (Material Design 3) + `@expo/vector-icons` |
 | Local data | `expo-sqlite` (plant list) + `AsyncStorage` (preferences) |
 | Maps & location | `react-native-maps` + `expo-location` |
+| Notifications | `expo-notifications` (local, zone-based seasonal tips) |
 | Auth | Local on-device stub today → **AWS Cognito** (Amplify) at Module 5 |
 | Cloud (planned) | AWS AppSync (GraphQL) + DynamoDB sync |
 
@@ -105,6 +106,21 @@ edit/delete, recommendations, map, location filter, device preferences).
 
 ---
 
+## Stretch goals implemented
+
+The Conception doc names Push Notifications and Accessibility as the recommended first stretch goals;
+both are in, alongside the "Pest of the season" secondary feature:
+
+- **Seasonal "Pest of the Season" intelligence** — an **In season now** card on My Garden shows a
+  zone-specific tip (e.g. *"Aphids are active around May in Zone 8a — consider planting marigold"*)
+  and deep-links into the matching companion recommendations.
+- **Local seasonal notifications** — opt-in in Settings: schedules a monthly zone-based reminder and
+  offers a one-tap **preview tip**. Local-only (no server); see the note under Known limitations.
+- **Accessibility** — screen-reader labels/roles on icon-only controls (edit/delete, FAB, map
+  filters, password toggle), accessible plant-row summaries, plus light/dark/system theming and OS
+  font scaling. Especially aimed at the older-gardener segment (the "Anita" persona).
+- **Search** — the My Garden list is searchable by plant name, location, or pest.
+
 ## Roadmap
 
 Sequenced to the course modules (Demo I is Module 4 = data/lists, **before** the auth and maps modules):
@@ -120,6 +136,8 @@ Sequenced to the course modules (Demo I is Module 4 = data/lists, **before** the
 - Auth is a **non-secure local stub** (passwords are hashed weakly on-device) — placeholder for Cognito.
 - Nurseries are **sample data** scattered around the user for the demo, not a live places feed.
 - No cloud sync yet; data is per-device.
+- Notifications are **local only**: remote push isn't supported in Expo Go (SDK 53+), but the local
+  seasonal reminders here work in both Expo Go and a dev build.
 - Recommendations are **organic-gardening guidance, not certified agronomic advice.**
 
 ---

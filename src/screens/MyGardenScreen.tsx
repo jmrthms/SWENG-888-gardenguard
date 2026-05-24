@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 import {
   ActivityIndicator,
   Button,
+  Card,
   Chip,
   FAB,
   Menu,
@@ -21,6 +22,7 @@ import { EmptyState } from '../components/EmptyState';
 import { pestLabel } from '../data/pests';
 import { zoneNumber } from '../data/zones';
 import { distanceMiles, formatDistance } from '../utils/geo';
+import { seasonalTip } from '../data/seasons';
 import type { Coordinates, Plant } from '../models/types';
 import type { GardenScreenNav } from '../navigation/types';
 
@@ -48,6 +50,8 @@ export default function MyGardenScreen() {
           onPress={() => nav.navigate('SettingsTab')}
           style={styles.zoneChip}
           hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Current zone ${preferences.zone}. Opens settings.`}
         >
           <MaterialCommunityIcons name="map-marker-radius" size={16} color={theme.colors.onPrimary} />
           <Text style={[styles.zoneText, { color: theme.colors.onPrimary }]}>Zone {preferences.zone}</Text>
@@ -80,6 +84,8 @@ export default function MyGardenScreen() {
     setFilter(mode);
     if (mode === 'near' && !location) void requestNearMe();
   };
+
+  const seasonal = useMemo(() => seasonalTip(preferences.zone), [preferences.zone]);
 
   const data = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -125,6 +131,36 @@ export default function MyGardenScreen() {
   return (
     <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
       <View style={styles.controls}>
+        {seasonal && (
+          <Card
+            mode="contained"
+            style={[styles.seasonCard, { backgroundColor: theme.colors.primaryContainer }]}
+            accessible
+            accessibilityLabel={`In season now. ${seasonal.message}`}
+          >
+            <Card.Content style={styles.seasonContent}>
+              <MaterialCommunityIcons name="calendar-alert" size={22} color={theme.colors.onPrimaryContainer} />
+              <View style={styles.flexCol}>
+                <Text variant="labelLarge" style={{ color: theme.colors.onPrimaryContainer }}>
+                  In season now
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onPrimaryContainer }}>
+                  {seasonal.message}
+                </Text>
+              </View>
+            </Card.Content>
+            <Card.Actions>
+              <Button
+                compact
+                textColor={theme.colors.onPrimaryContainer}
+                onPress={() => nav.navigate('RecommendationsTab', { pestId: seasonal.pestId })}
+                accessibilityHint="Opens organic companion recommendations for this pest"
+              >
+                See companions
+              </Button>
+            </Card.Actions>
+          </Card>
+        )}
         <Searchbar
           placeholder="Search plants or pests"
           value={query}
@@ -205,6 +241,7 @@ export default function MyGardenScreen() {
         label="Add Plant"
         style={styles.fab}
         onPress={() => nav.navigate('AddEditPlant')}
+        accessibilityLabel="Add a plant to your garden"
       />
 
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={4000}>
@@ -218,6 +255,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, gap: 10 },
+  seasonCard: { borderRadius: 14 },
+  seasonContent: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  flexCol: { flex: 1 },
   search: { borderRadius: 12 },
   searchInput: { minHeight: 0 },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

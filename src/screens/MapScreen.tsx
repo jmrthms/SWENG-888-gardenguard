@@ -160,13 +160,23 @@ export default function MapScreen() {
         <Chip
           icon={nearOnly ? 'crosshairs-gps' : 'filter-variant'}
           selected={nearOnly}
-          mode={nearOnly ? 'flat' : 'flat'}
+          mode="flat"
           onPress={toggleNear}
           style={styles.controlChip}
+          accessibilityLabel={
+            nearOnly
+              ? 'Filter: near me. Tap to show all locations.'
+              : 'Filter: all locations. Tap to show only nearby beds.'
+          }
         >
           {nearOnly ? 'Near me' : 'All locations'}
         </Chip>
-        <Chip icon="crosshairs" onPress={recenterOnMe} style={styles.controlChip}>
+        <Chip
+          icon="crosshairs"
+          onPress={recenterOnMe}
+          style={styles.controlChip}
+          accessibilityLabel="Center the map on my location"
+        >
           My location
         </Chip>
       </View>

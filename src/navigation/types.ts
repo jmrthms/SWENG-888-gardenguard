@@ -20,7 +20,7 @@ export type GardenStackParamList = {
 
 export type MainTabsParamList = {
   GardenTab: NavigatorScreenParams<GardenStackParamList> | undefined;
-  RecommendationsTab: undefined;
+  RecommendationsTab: { pestId?: string } | undefined;
   MapTab: { focusPlantId?: string } | undefined;
   SettingsTab: undefined;
 };
@@ -39,3 +39,4 @@ export type AuthScreenNav = NativeStackNavigationProp<AuthStackParamList>;
 export type PlantDetailRoute = RouteProp<GardenStackParamList, 'PlantDetail'>;
 export type AddEditPlantRoute = RouteProp<GardenStackParamList, 'AddEditPlant'>;
 export type MapTabRoute = RouteProp<MainTabsParamList, 'MapTab'>;
+export type RecommendationsTabRoute = RouteProp<MainTabsParamList, 'RecommendationsTab'>;

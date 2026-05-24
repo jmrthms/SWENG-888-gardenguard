@@ -8,6 +8,7 @@ import {
   List,
   Portal,
   SegmentedButtons,
+  Snackbar,
   Switch,
   Text,
   useTheme,
@@ -15,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
 import { ZonePicker } from '../components/ZonePicker';
+import { applySeasonalNotifications, sendPreviewTip } from '../storage/notifications';
 import type { ThemeMode, Units } from '../models/types';
 import { TAGLINE } from '../theme/theme';
 
@@ -23,9 +25,31 @@ export default function SettingsScreen() {
   const { user, signOut } = useAuth();
   const { preferences, update } = usePreferences();
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [snack, setSnack] = useState('');
+
+  const onToggleNotifications = async (value: boolean) => {
+    void update({ notifications: value });
+    const res = await applySeasonalNotifications(preferences.zone, value);
+    if (value && !res.ok) {
+      void update({ notifications: false }); // revert if we couldn't actually enable them
+      setSnack(
+        res.reason === 'denied'
+          ? 'Allow notifications in system settings to get seasonal tips.'
+          : 'Could not enable notifications on this device.',
+      );
+    } else if (value && res.ok) {
+      setSnack('Seasonal tips on — a monthly reminder is scheduled.');
+    }
+  };
+
+  const onPreviewTip = async () => {
+    const res = await sendPreviewTip(preferences.zone);
+    setSnack(res.ok ? 'Preview tip scheduled — watch for the notification.' : 'Could not send a preview here.');
+  };
 
   return (
-    <ScrollView style={{ backgroundColor: theme.colors.background }} contentContainerStyle={styles.scroll}>
+    <View style={[styles.flex, { backgroundColor: theme.colors.background }]}>
+      <ScrollView style={{ backgroundColor: theme.colors.background }} contentContainerStyle={styles.scroll}>
       <Card mode="contained" style={styles.card}>
         <Card.Content style={styles.section}>
           <Text variant="titleSmall" style={styles.heading}>
@@ -70,12 +94,23 @@ export default function SettingsScreen() {
       <Card mode="contained" style={styles.card}>
         <List.Item
           title="Seasonal notifications"
-          description="Zone-based pest-season tips (coming soon)"
+          description="Zone-based pest-season tips"
           left={(props) => <List.Icon {...props} icon="bell-outline" />}
           right={() => (
-            <Switch value={preferences.notifications} onValueChange={(notifications) => update({ notifications })} />
+            <Switch
+              value={preferences.notifications}
+              onValueChange={onToggleNotifications}
+              accessibilityLabel="Seasonal notifications"
+            />
           )}
         />
+        {preferences.notifications && (
+          <View style={styles.previewWrap}>
+            <Button mode="text" icon="bell-ring-outline" onPress={onPreviewTip}>
+              Send a preview tip
+            </Button>
+          </View>
+        )}
       </Card>
 
       <Card mode="contained" style={styles.card}>
@@ -129,12 +164,18 @@ export default function SettingsScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
-    </ScrollView>
+      </ScrollView>
+      <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3500}>
+        {snack}
+      </Snackbar>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { padding: 16, gap: 12, paddingBottom: 40 },
+  flex: { flex: 1 },
+  previewWrap: { alignItems: 'flex-start', paddingHorizontal: 8, paddingBottom: 8 },
   card: { borderRadius: 16 },
   section: { gap: 8 },
   heading: { fontWeight: '700' },

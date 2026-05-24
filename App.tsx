@@ -23,8 +23,12 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
 import SplashScreen from './src/screens/SplashScreen';
 import { darkTheme, lightTheme, navDarkTheme, navLightTheme } from './src/theme/theme';
+import { configureNotificationHandler } from './src/storage/notifications';
 
 /** Applies the effective theme and shows the splash until prefs + session load. */
+// Surface scheduled local notifications while the app is foregrounded.
+configureNotificationHandler();
+
 function ThemedApp() {
   const systemScheme = useColorScheme();
   const { preferences, loading: prefsLoading } = usePreferences();

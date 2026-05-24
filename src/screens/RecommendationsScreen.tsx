@@ -1,23 +1,29 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Button, Card, Chip, Divider, Menu, Text, useTheme } from 'react-native-paper';
 import { usePreferences } from '../context/PreferencesContext';
 import { CATEGORY_META } from '../components/categoryMeta';
 import { EmptyState } from '../components/EmptyState';
 import { PESTS, pestLabel } from '../data/pests';
 import { plantFitsZone, recommendForPest, toPrefill } from '../data/recommendations';
-import type { TabScreenNav } from '../navigation/types';
+import type { RecommendationsTabRoute, TabScreenNav } from '../navigation/types';
 
 export default function RecommendationsScreen() {
   const theme = useTheme();
   const nav = useNavigation<TabScreenNav>();
+  const route = useRoute<RecommendationsTabRoute>();
   const { preferences } = usePreferences();
 
-  const [pestId, setPestId] = useState('aphids');
+  const [pestId, setPestId] = useState(route.params?.pestId ?? 'aphids');
   const [pestMenu, setPestMenu] = useState(false);
   const [containerOnly, setContainerOnly] = useState(false);
+
+  // Honor a pest passed in from the Home "In season" card or a deep link.
+  useEffect(() => {
+    if (route.params?.pestId) setPestId(route.params.pestId);
+  }, [route.params?.pestId]);
 
   const results = useMemo(
     () => recommendForPest(pestId, { zone: preferences.zone, containerOnly }),

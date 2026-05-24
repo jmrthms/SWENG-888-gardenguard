@@ -230,7 +230,13 @@ export default function AddEditPlantScreen() {
             Use my GPS
           </Button>
           {coordinates && (
-            <Chip icon="map-marker-check" onClose={() => setCoordinates(undefined)} style={styles.coordChip}>
+            <Chip
+              icon="map-marker-check"
+              onClose={() => setCoordinates(undefined)}
+              closeIconAccessibilityLabel="Remove saved location"
+              style={styles.coordChip}
+              accessibilityLabel={`Saved location ${coordinates.latitude.toFixed(3)}, ${coordinates.longitude.toFixed(3)}`}
+            >
               {coordinates.latitude.toFixed(3)}, {coordinates.longitude.toFixed(3)}
             </Chip>
           )}

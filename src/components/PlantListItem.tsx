@@ -24,8 +24,20 @@ export function PlantListItem({
         (plant.repels.length > 3 ? `, +${plant.repels.length - 3}` : '')
       : 'No pests tagged';
 
+  const a11yLabel =
+    `${plant.name}, ${cat.label}. Repels ${repelsText}.` +
+    (plant.locationLabel ? ` Location ${plant.locationLabel}.` : '') +
+    (distanceLabel ? ` ${distanceLabel} away.` : '');
+
   return (
-    <Card mode="contained" style={styles.card} onPress={onPress}>
+    <Card
+      mode="contained"
+      style={styles.card}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
+      accessibilityHint="Opens plant details"
+    >
       <Card.Content style={styles.content}>
         <View style={[styles.iconWrap, { backgroundColor: theme.colors.primaryContainer }]}>
           <MaterialCommunityIcons name={cat.icon} size={24} color={theme.colors.onPrimaryContainer} />

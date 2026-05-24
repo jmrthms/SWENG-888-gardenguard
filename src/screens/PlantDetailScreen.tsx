@@ -66,12 +66,14 @@ export default function PlantDetailScreen() {
                 icon="pencil"
                 iconColor={theme.colors.onPrimary}
                 size={22}
+                accessibilityLabel="Edit plant"
                 onPress={() => nav.navigate('AddEditPlant', { plantId: plant.id })}
               />
               <IconButton
                 icon="trash-can-outline"
                 iconColor={theme.colors.onPrimary}
                 size={22}
+                accessibilityLabel="Delete plant"
                 onPress={() => setConfirmDelete(true)}
               />
             </View>

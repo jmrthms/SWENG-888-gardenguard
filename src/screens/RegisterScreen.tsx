@@ -82,6 +82,7 @@ export default function RegisterScreen() {
           right={
             <TextInput.Icon
               icon={showPassword ? 'eye-off' : 'eye'}
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               onPress={() => setShowPassword((s) => !s)}
             />
           }
