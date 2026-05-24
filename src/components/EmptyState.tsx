@@ -12,12 +12,20 @@ export function EmptyState({
   message,
   actionLabel,
   onAction,
+  actionIcon = 'plus',
+  secondaryActionLabel,
+  onSecondaryAction,
+  secondaryIcon,
 }: {
   icon: IconName;
   title: string;
   message: string;
   actionLabel?: string;
   onAction?: () => void;
+  actionIcon?: IconName;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
+  secondaryIcon?: IconName;
 }) {
   const theme = useTheme();
   return (
@@ -30,8 +38,13 @@ export function EmptyState({
         {message}
       </Text>
       {actionLabel && onAction && (
-        <Button mode="contained" icon="plus" onPress={onAction} style={styles.action}>
+        <Button mode="contained" icon={actionIcon} onPress={onAction} style={styles.action}>
           {actionLabel}
+        </Button>
+      )}
+      {secondaryActionLabel && onSecondaryAction && (
+        <Button mode="text" icon={secondaryIcon} onPress={onSecondaryAction}>
+          {secondaryActionLabel}
         </Button>
       )}
     </View>

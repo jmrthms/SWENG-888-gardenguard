@@ -30,7 +30,9 @@ export default function SettingsScreen() {
   const onToggleNotifications = async (value: boolean) => {
     void update({ notifications: value });
     const res = await applySeasonalNotifications(preferences.zone, value);
-    if (value && !res.ok) {
+    if (value && res.reason === 'expo-go') {
+      setSnack('Seasonal tips activate in a development build — Expo Go can’t show notifications.');
+    } else if (value && !res.ok) {
       void update({ notifications: false }); // revert if we couldn't actually enable them
       setSnack(
         res.reason === 'denied'
@@ -44,7 +46,11 @@ export default function SettingsScreen() {
 
   const onPreviewTip = async () => {
     const res = await sendPreviewTip(preferences.zone);
-    setSnack(res.ok ? 'Preview tip scheduled — watch for the notification.' : 'Could not send a preview here.');
+    if (res.reason === 'expo-go') {
+      setSnack('Preview needs a development build — not available in Expo Go.');
+    } else {
+      setSnack(res.ok ? 'Preview tip scheduled — watch for the notification.' : 'Could not send a preview here.');
+    }
   };
 
   return (

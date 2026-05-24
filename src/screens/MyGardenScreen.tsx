@@ -32,7 +32,7 @@ const NEAR_RADIUS_MI = 50;
 export default function MyGardenScreen() {
   const theme = useTheme();
   const nav = useNavigation<GardenScreenNav>();
-  const { plants, loading } = useGarden();
+  const { plants, loading, seedSamples } = useGarden();
   const { preferences } = usePreferences();
 
   const [query, setQuery] = useState('');
@@ -41,6 +41,7 @@ export default function MyGardenScreen() {
   const [location, setLocation] = useState<Coordinates | null>(null);
   const [locating, setLocating] = useState(false);
   const [snack, setSnack] = useState('');
+  const [seeding, setSeeding] = useState(false);
 
   // Live zone indicator in the header (matches the wireframe "Zone 8a").
   useLayoutEffect(() => {
@@ -84,6 +85,17 @@ export default function MyGardenScreen() {
     setFilter(mode);
     if (mode === 'near' && !location) void requestNearMe();
   };
+
+  const onLoadSamples = useCallback(async () => {
+    if (seeding) return;
+    setSeeding(true);
+    try {
+      await seedSamples();
+      setSnack('Loaded a sample garden.');
+    } finally {
+      setSeeding(false);
+    }
+  }, [seeding, seedSamples]);
 
   const seasonal = useMemo(() => seasonalTip(preferences.zone), [preferences.zone]);
 
@@ -216,6 +228,9 @@ export default function MyGardenScreen() {
               message="Add the plants you grow and tag the pests they fend off — or get organic companion recommendations for your zone."
               actionLabel="Add your first plant"
               onAction={() => nav.navigate('AddEditPlant')}
+              secondaryActionLabel={seeding ? 'Loading…' : 'Load sample garden'}
+              onSecondaryAction={onLoadSamples}
+              secondaryIcon="sprout"
             />
           ) : (
             <EmptyState
@@ -227,6 +242,7 @@ export default function MyGardenScreen() {
                   : 'No plants match your search or filter. Try clearing them.'
               }
               actionLabel="Clear filters"
+              actionIcon="filter-remove-outline"
               onAction={() => {
                 setQuery('');
                 setFilter('all');

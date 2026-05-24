@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { Plant } from '../models/types';
 import { plantRepository, type PlantInput } from '../storage/plantRepository';
+import { SAMPLE_PLANTS } from '../data/sampleGarden';
 import { useAuth } from './AuthContext';
 
 interface GardenContextValue {
@@ -10,6 +11,7 @@ interface GardenContextValue {
   addPlant: (input: PlantInput) => Promise<Plant>;
   updatePlant: (plant: Plant) => Promise<void>;
   deletePlant: (id: string) => Promise<void>;
+  seedSamples: () => Promise<void>;
   getPlant: (id: string) => Plant | undefined;
 }
 
@@ -63,11 +65,19 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     [refresh],
   );
 
+  const seedSamples = useCallback(async () => {
+    if (!ownerId) return;
+    for (const p of SAMPLE_PLANTS) {
+      await plantRepository.create(ownerId, p);
+    }
+    await refresh();
+  }, [ownerId, refresh]);
+
   const getPlant = useCallback((id: string) => plants.find((p) => p.id === id), [plants]);
 
   const value = useMemo(
-    () => ({ plants, loading, refresh, addPlant, updatePlant, deletePlant, getPlant }),
-    [plants, loading, refresh, addPlant, updatePlant, deletePlant, getPlant],
+    () => ({ plants, loading, refresh, addPlant, updatePlant, deletePlant, seedSamples, getPlant }),
+    [plants, loading, refresh, addPlant, updatePlant, deletePlant, seedSamples, getPlant],
   );
   return <GardenContext.Provider value={value}>{children}</GardenContext.Provider>;
 }
