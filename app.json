@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "GardenGuard",
+    "slug": "gardenguard",
+    "version": "1.0.0",
+    "scheme": "gardenguard",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "primaryColor": "#2E7D32",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "edu.psu.sweng888.group4.gardenguard"
+    },
+    "android": {
+      "package": "edu.psu.sweng888.group4.gardenguard",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4EA",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GardenGuard uses your location to map your garden beds, show nearby nurseries, and filter plants near you."
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}
