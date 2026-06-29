@@ -15,8 +15,11 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { useGarden } from '../context/GardenContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { PestSelector } from '../components/PestChips';
-import type { Coordinates, PlantCategory, Sun, Water } from '../models/types';
+import { CatalogPicker } from '../components/CatalogPicker';
+import { toPrefill } from '../data/recommendations';
+import type { CatalogPlant, Coordinates, PlantCategory, Sun, Water } from '../models/types';
 import type { AddEditPlantRoute, GardenScreenNav } from '../navigation/types';
 
 const ZONE_NUMBERS = Array.from({ length: 13 }, (_, i) => i + 1);
@@ -55,6 +58,7 @@ export default function AddEditPlantScreen() {
   const nav = useNavigation<GardenScreenNav>();
   const route = useRoute<AddEditPlantRoute>();
   const { addPlant, updatePlant, getPlant } = useGarden();
+  const { preferences } = usePreferences();
 
   const editingId = route.params?.plantId;
   const prefill = route.params?.prefill;
@@ -63,14 +67,28 @@ export default function AddEditPlantScreen() {
 
   const [name, setName] = useState(existing?.name ?? prefill?.name ?? '');
   const [category, setCategory] = useState<PlantCategory>(existing?.category ?? prefill?.category ?? 'flower');
-  const [repels, setRepels] = useState<string[]>(existing?.repels ?? prefill?.repels ?? []);
+  const [pests, setPests] = useState<string[]>(existing?.pests ?? prefill?.pests ?? []);
   const [sun, setSun] = useState<Sun>(existing?.sun ?? prefill?.sun ?? 'full');
   const [water, setWater] = useState<Water>(existing?.water ?? prefill?.water ?? 'moderate');
   const [zoneMin, setZoneMin] = useState(existing?.zoneMin ?? prefill?.zoneMin ?? 2);
   const [zoneMax, setZoneMax] = useState(existing?.zoneMax ?? prefill?.zoneMax ?? 11);
+  const [catalogId, setCatalogId] = useState<string | undefined>(existing?.catalogId ?? prefill?.catalogId);
   const [locationLabel, setLocationLabel] = useState(existing?.locationLabel ?? '');
   const [coordinates, setCoordinates] = useState<Coordinates | undefined>(existing?.coordinates);
   const [notes, setNotes] = useState(existing?.notes ?? '');
+
+  // Autofill the form from a catalog plant the user picks for their region.
+  const applyCatalog = (c: CatalogPlant) => {
+    const pf = toPrefill(c);
+    setName(pf.name ?? c.name);
+    setCategory(pf.category ?? c.category);
+    setPests(pf.pests ?? []);
+    setSun(pf.sun ?? 'full');
+    setWater(pf.water ?? 'moderate');
+    setZoneMin(pf.zoneMin ?? 2);
+    setZoneMax(pf.zoneMax ?? 11);
+    setCatalogId(c.id);
+  };
 
   const [gpsBusy, setGpsBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -115,7 +133,7 @@ export default function AddEditPlantScreen() {
       const payload = {
         name: name.trim(),
         category,
-        repels,
+        pests,
         sun,
         water,
         zoneMin: lo,
@@ -123,7 +141,7 @@ export default function AddEditPlantScreen() {
         locationLabel: locationLabel.trim(),
         coordinates,
         notes: notes.trim() || undefined,
-        catalogId: existing?.catalogId ?? prefill?.catalogId,
+        catalogId,
       };
       if (isEditing && existing) {
         await updatePlant({ ...existing, ...payload });
@@ -143,6 +161,17 @@ export default function AddEditPlantScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {!isEditing && (
+          <>
+            <View style={styles.catalogRow}>
+              <CatalogPicker region={preferences.region} onSelect={applyCatalog} />
+            </View>
+            <HelperText type="info" visible style={styles.helper}>
+              Pick a plant from your region to autofill its category and pests — or just type below.
+            </HelperText>
+          </>
+        )}
+
         <TextInput
           mode="outlined"
           label="Plant name"
@@ -171,9 +200,9 @@ export default function AddEditPlantScreen() {
         />
 
         <Text variant="labelLarge" style={styles.label}>
-          Repels (pests &amp; critters)
+          Pests to watch
         </Text>
-        <PestSelector selected={repels} onToggle={(id) => setRepels((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))} />
+        <PestSelector selected={pests} onToggle={(id) => setPests((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))} />
 
         <Divider style={styles.divider} />
 
@@ -270,6 +299,7 @@ export default function AddEditPlantScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { padding: 16, gap: 8, paddingBottom: 40 },
+  catalogRow: { alignItems: 'flex-start' },
   label: { marginTop: 12, marginBottom: 4 },
   divider: { marginTop: 16 },
   zoneRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },

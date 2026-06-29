@@ -15,11 +15,12 @@ import {
 } from 'react-native-paper';
 import { useGarden } from '../context/GardenContext';
 import { usePreferences } from '../context/PreferencesContext';
-import { RepelsRow } from '../components/PestChips';
+import { PestRow } from '../components/PestChips';
 import { CATEGORY_META, SUN_META, WATER_META, zoneRangeLabel } from '../components/categoryMeta';
 import { EmptyState } from '../components/EmptyState';
 import { companionsForPlant, toPrefill } from '../data/recommendations';
 import { pestLabel } from '../data/pests';
+import { regionLabel } from '../data/regions';
 import { zoneNumber } from '../data/zones';
 import type { GardenScreenNav, PlantDetailRoute } from '../navigation/types';
 
@@ -52,8 +53,8 @@ export default function PlantDetailScreen() {
   const zoneFits = plant ? !Number.isNaN(userZone) && userZone >= plant.zoneMin && userZone <= plant.zoneMax : false;
 
   const companions = useMemo(
-    () => (plant ? companionsForPlant(plant, preferences.zone) : []),
-    [plant, preferences.zone],
+    () => (plant ? companionsForPlant(plant, preferences.region) : []),
+    [plant, preferences.region],
   );
 
   useLayoutEffect(() => {
@@ -126,9 +127,9 @@ export default function PlantDetailScreen() {
       <Card mode="contained" style={styles.card}>
         <Card.Content>
           <Text variant="titleSmall" style={styles.cardTitle}>
-            Defends against
+            Pests to watch
           </Text>
-          <RepelsRow repels={plant.repels} />
+          <PestRow pests={plant.pests} />
         </Card.Content>
       </Card>
 
@@ -185,7 +186,7 @@ export default function PlantDetailScreen() {
               Companion suggestions
             </Text>
             <Text variant="bodySmall" style={[styles.subtle, { color: theme.colors.onSurfaceVariant }]}>
-              Organic pairings that fit Zone {preferences.zone}
+              Organic companions for the {regionLabel(preferences.region)} that repel this plant&apos;s pests
             </Text>
           </Card.Content>
           {companions.map((c) => (

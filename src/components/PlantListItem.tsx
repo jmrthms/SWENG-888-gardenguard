@@ -18,14 +18,14 @@ export function PlantListItem({
 }) {
   const theme = useTheme();
   const cat = CATEGORY_META[plant.category];
-  const repelsText =
-    plant.repels.length > 0
-      ? plant.repels.slice(0, 3).map(pestLabel).join(', ') +
-        (plant.repels.length > 3 ? `, +${plant.repels.length - 3}` : '')
+  const pestsText =
+    plant.pests.length > 0
+      ? plant.pests.slice(0, 3).map(pestLabel).join(', ') +
+        (plant.pests.length > 3 ? `, +${plant.pests.length - 3}` : '')
       : 'No pests tagged';
 
   const a11yLabel =
-    `${plant.name}, ${cat.label}. Repels ${repelsText}.` +
+    `${plant.name}, ${cat.label}. Pests to watch: ${pestsText}.` +
     (plant.locationLabel ? ` Location ${plant.locationLabel}.` : '') +
     (distanceLabel ? ` ${distanceLabel} away.` : '');
 
@@ -47,7 +47,7 @@ export function PlantListItem({
             {plant.name}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
-            Repels: {repelsText}
+            Pests: {pestsText}
           </Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
             {cat.label}

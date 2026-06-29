@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import Constants, { AppOwnership, ExecutionEnvironment } from 'expo-constants';
+import type { RegionId } from '../models/types';
 import { seasonalTip } from '../data/seasons';
 
 /**
@@ -64,8 +65,8 @@ async function ensureAndroidChannel(N: NotificationsModule): Promise<void> {
   });
 }
 
-/** Enable (schedule a monthly zone-based tip) or disable seasonal notifications. */
-export async function applySeasonalNotifications(zone: string, enabled: boolean): Promise<NotificationResult> {
+/** Enable (schedule a monthly region-based tip) or disable seasonal notifications. */
+export async function applySeasonalNotifications(region: RegionId, enabled: boolean): Promise<NotificationResult> {
   const N = load();
   if (!N) return { ok: false, reason: 'expo-go' };
   try {
@@ -75,7 +76,7 @@ export async function applySeasonalNotifications(zone: string, enabled: boolean)
     if (!(await ensurePermission(N))) return { ok: false, reason: 'denied' };
     await ensureAndroidChannel(N);
 
-    const tip = seasonalTip(zone);
+    const tip = seasonalTip(region);
     if (tip) {
       await N.scheduleNotificationAsync({
         content: { title: 'GardenGuard · In season', body: tip.message },
@@ -95,14 +96,14 @@ export async function applySeasonalNotifications(zone: string, enabled: boolean)
 }
 
 /** Fire a sample tip shortly so users can preview the feature (and demo it). */
-export async function sendPreviewTip(zone: string): Promise<NotificationResult> {
+export async function sendPreviewTip(region: RegionId): Promise<NotificationResult> {
   const N = load();
   if (!N) return { ok: false, reason: 'expo-go' };
   try {
     if (!(await ensurePermission(N))) return { ok: false, reason: 'denied' };
     await ensureAndroidChannel(N);
 
-    const tip = seasonalTip(zone);
+    const tip = seasonalTip(region);
     await N.scheduleNotificationAsync({
       content: {
         title: 'GardenGuard · In season',

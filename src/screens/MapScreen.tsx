@@ -9,7 +9,8 @@ import { useGarden } from '../context/GardenContext';
 import { usePreferences } from '../context/PreferencesContext';
 import { EmptyState } from '../components/EmptyState';
 import { pestLabel } from '../data/pests';
-import { DEFAULT_CENTER, nearbyNurseries } from '../data/nurseries';
+import { nearbyNurseries } from '../data/nurseries';
+import { regionMeta } from '../data/regions';
 import { distanceMiles } from '../utils/geo';
 import { markerColors } from '../theme/colors';
 import type { Coordinates } from '../models/types';
@@ -36,7 +37,7 @@ export default function MapScreen() {
   const bedPlants = useMemo(() => plants.filter((p) => p.coordinates), [plants]);
 
   const center: Coordinates =
-    focusPlant?.coordinates ?? userLoc ?? bedPlants[0]?.coordinates ?? DEFAULT_CENTER;
+    focusPlant?.coordinates ?? userLoc ?? bedPlants[0]?.coordinates ?? regionMeta(preferences.region).center;
   const nurseries = useMemo(() => nearbyNurseries(center), [center.latitude, center.longitude]);
 
   const visibleBeds = useMemo(() => {
@@ -85,7 +86,11 @@ export default function MapScreen() {
   const toggleNear = async () => {
     const next = !nearOnly;
     setNearOnly(next);
-    if (next && !userLoc) await ensureLocation();
+    // If we can't get a location, don't leave the chip stuck "on" while showing everything.
+    if (next && !userLoc) {
+      const loc = await ensureLocation();
+      if (!loc) setNearOnly(false);
+    }
   };
 
   // Web is out of scope (no native map module) — show a readable marker list.
@@ -129,7 +134,7 @@ export default function MapScreen() {
             coordinate={p.coordinates!}
             pinColor={markerColors.bed}
             title={p.name}
-            description={p.repels.length ? `Repels ${p.repels.slice(0, 3).map(pestLabel).join(', ')}` : undefined}
+            description={p.pests.length ? `Pests: ${p.pests.slice(0, 3).map(pestLabel).join(', ')}` : undefined}
           >
             <Callout onPress={() => nav.navigate('GardenTab', { screen: 'PlantDetail', params: { plantId: p.id } })}>
               <View style={styles.callout}>

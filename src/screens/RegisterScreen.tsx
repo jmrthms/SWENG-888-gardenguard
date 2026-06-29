@@ -4,9 +4,10 @@ import { useNavigation } from '@react-navigation/native';
 import { Appbar, Button, HelperText, Text, TextInput, useTheme } from 'react-native-paper';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
-import { ZonePicker } from '../components/ZonePicker';
-import { DEFAULT_ZONE } from '../data/zones';
+import { RegionPicker } from '../components/RegionPicker';
+import { DEFAULT_REGION, regionMeta } from '../data/regions';
 import type { AuthScreenNav } from '../navigation/types';
+import type { RegionId } from '../models/types';
 
 export default function RegisterScreen() {
   const theme = useTheme();
@@ -18,7 +19,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [zone, setZone] = useState(DEFAULT_ZONE);
+  const [region, setRegion] = useState<RegionId>(DEFAULT_REGION);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -27,8 +28,8 @@ export default function RegisterScreen() {
     setBusy(true);
     try {
       await signUp(name, email, password);
-      // Capturing the zone now makes the first Home screen useful (US-1 rationale).
-      await update({ zone });
+      // Capturing the region now makes the first Home screen useful (US-1 rationale).
+      await update({ region, zone: regionMeta(region).defaultZone });
       // US-1: account created → redirect to Login to sign in.
       nav.navigate('Login', { registeredEmail: email.trim().toLowerCase() });
     } catch (e) {
@@ -50,7 +51,7 @@ export default function RegisterScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text variant="bodyMedium" style={[styles.intro, { color: theme.colors.onSurfaceVariant }]}>
-          Set your USDA hardiness zone now — it powers your region-specific pest recommendations.
+          Pick your growing region now — it powers your region-specific plant catalog and pest recommendations.
         </Text>
 
         <TextInput
@@ -91,7 +92,7 @@ export default function RegisterScreen() {
           At least 6 characters.
         </HelperText>
 
-        <ZonePicker value={zone} onChange={setZone} />
+        <RegionPicker value={region} onChange={setRegion} />
 
         {error && (
           <HelperText type="error" visible>

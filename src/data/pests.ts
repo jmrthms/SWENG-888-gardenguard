@@ -1,37 +1,24 @@
 import type { Pest } from '../models/types';
+import { DATASET_PESTS } from './regionalCatalog.generated';
 
 /**
- * Catalog of pests and critters GardenGuard helps defend against. Ids are
- * referenced by the plant knowledge base (plantsCatalog.ts).
+ * Pests, critters, and diseases GardenGuard helps defend against. Derived from
+ * the dataset (so the Recommendations menu and the Add/Edit pest selector always
+ * match the catalog), with a thin override table for insect/critter/disease
+ * typing the raw data doesn't carry.
  */
-export const PESTS: Pest[] = [
-  { id: 'aphids', label: 'Aphids', type: 'insect' },
-  { id: 'whiteflies', label: 'Whiteflies', type: 'insect' },
-  { id: 'nematodes', label: 'Root-knot nematodes', type: 'insect' },
-  { id: 'japanese-beetles', label: 'Japanese beetles', type: 'insect' },
-  { id: 'mexican-bean-beetles', label: 'Mexican bean beetles', type: 'insect' },
-  { id: 'cucumber-beetles', label: 'Cucumber beetles', type: 'insect' },
-  { id: 'flea-beetles', label: 'Flea beetles', type: 'insect' },
-  { id: 'asparagus-beetles', label: 'Asparagus beetles', type: 'insect' },
-  { id: 'carrot-flies', label: 'Carrot flies', type: 'insect' },
-  { id: 'cabbage-loopers', label: 'Cabbage loopers', type: 'insect' },
-  { id: 'cabbage-moths', label: 'Cabbage moths', type: 'insect' },
-  { id: 'tomato-hornworms', label: 'Tomato hornworms', type: 'insect' },
-  { id: 'squash-bugs', label: 'Squash bugs', type: 'insect' },
-  { id: 'spider-mites', label: 'Spider mites', type: 'insect' },
-  { id: 'leafhoppers', label: 'Leafhoppers', type: 'insect' },
-  { id: 'mosquitoes', label: 'Mosquitoes', type: 'insect' },
-  { id: 'flies', label: 'Flies', type: 'insect' },
-  { id: 'moths', label: 'Moths', type: 'insect' },
-  { id: 'ants', label: 'Ants', type: 'insect' },
-  { id: 'fleas', label: 'Fleas', type: 'insect' },
-  { id: 'ticks', label: 'Ticks', type: 'insect' },
-  { id: 'slugs', label: 'Slugs', type: 'critter' },
-  { id: 'snails', label: 'Snails', type: 'critter' },
-  { id: 'rabbits', label: 'Rabbits', type: 'critter' },
-  { id: 'deer', label: 'Deer', type: 'critter' },
-  { id: 'mice', label: 'Mice & rodents', type: 'critter' },
-];
+const TYPE_OVERRIDE: Record<string, Pest['type']> = {
+  'early-blight': 'disease',
+  'late-blight': 'disease',
+  'powdery-mildew': 'disease',
+  slugs: 'critter',
+};
+
+export const PESTS: Pest[] = DATASET_PESTS.map((p) => ({
+  id: p.id,
+  label: p.label,
+  type: TYPE_OVERRIDE[p.id] ?? 'insect',
+})).sort((a, b) => a.label.localeCompare(b.label));
 
 const PEST_BY_ID = new Map(PESTS.map((p) => [p.id, p]));
 
@@ -41,4 +28,16 @@ export function pestLabel(id: string): string {
 
 export function getPest(id: string): Pest | undefined {
   return PEST_BY_ID.get(id);
+}
+
+/** Icon for a pest type — insects, critters, and diseases get distinct glyphs. */
+export function pestIcon(type: Pest['type']): string {
+  switch (type) {
+    case 'critter':
+      return 'rabbit';
+    case 'disease':
+      return 'mushroom';
+    default:
+      return 'bug';
+  }
 }

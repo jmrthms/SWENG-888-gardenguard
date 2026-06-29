@@ -9,6 +9,8 @@ interface PlantRow {
   id: string;
   name: string;
   category: string;
+  // Legacy column name kept for on-device schema stability; holds the plant's
+  // pest ids (Plant.pests) as a JSON array.
   repels: string;
   sun: string;
   water: string;
@@ -28,7 +30,7 @@ function rowToPlant(r: PlantRow): Plant {
     id: r.id,
     name: r.name,
     category: r.category as Plant['category'],
-    repels: JSON.parse(r.repels) as string[],
+    pests: JSON.parse(r.repels) as string[],
     sun: r.sun as Plant['sun'],
     water: r.water as Plant['water'],
     zoneMin: r.zoneMin,
@@ -79,7 +81,7 @@ export const plantRepository = {
         ownerId,
         plant.name,
         plant.category,
-        JSON.stringify(plant.repels),
+        JSON.stringify(plant.pests),
         plant.sun,
         plant.water,
         plant.zoneMin,
@@ -107,7 +109,7 @@ export const plantRepository = {
       [
         plant.name,
         plant.category,
-        JSON.stringify(plant.repels),
+        JSON.stringify(plant.pests),
         plant.sun,
         plant.water,
         plant.zoneMin,

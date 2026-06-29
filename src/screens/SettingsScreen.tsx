@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
 import { ZonePicker } from '../components/ZonePicker';
+import { RegionPicker } from '../components/RegionPicker';
 import { applySeasonalNotifications, sendPreviewTip } from '../storage/notifications';
 import type { ThemeMode, Units } from '../models/types';
 import { TAGLINE } from '../theme/theme';
@@ -29,7 +30,7 @@ export default function SettingsScreen() {
 
   const onToggleNotifications = async (value: boolean) => {
     void update({ notifications: value });
-    const res = await applySeasonalNotifications(preferences.zone, value);
+    const res = await applySeasonalNotifications(preferences.region, value);
     if (value && res.reason === 'expo-go') {
       setSnack('Seasonal tips activate in a development build — Expo Go can’t show notifications.');
     } else if (value && !res.ok) {
@@ -45,7 +46,7 @@ export default function SettingsScreen() {
   };
 
   const onPreviewTip = async () => {
-    const res = await sendPreviewTip(preferences.zone);
+    const res = await sendPreviewTip(preferences.region);
     if (res.reason === 'expo-go') {
       setSnack('Preview needs a development build — not available in Expo Go.');
     } else {
@@ -59,12 +60,27 @@ export default function SettingsScreen() {
       <Card mode="contained" style={styles.card}>
         <Card.Content style={styles.section}>
           <Text variant="titleSmall" style={styles.heading}>
-            Region
+            Growing region
           </Text>
           <Text variant="bodySmall" style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
-            Your hardiness zone drives every recommendation.
+            Your region drives the plant catalog and every recommendation.
           </Text>
-          <ZonePicker value={preferences.zone} onChange={(zone) => update({ zone })} />
+          <RegionPicker
+            value={preferences.region}
+            onChange={(region) => {
+              void update({ region });
+              // Reschedule the monthly tip so its text matches the new region.
+              if (preferences.notifications) void applySeasonalNotifications(region, true);
+            }}
+          />
+
+          <Text variant="titleSmall" style={[styles.heading, styles.spaced]}>
+            USDA hardiness zone
+          </Text>
+          <Text variant="bodySmall" style={[styles.hint, { color: theme.colors.onSurfaceVariant }]}>
+            Optional — adds zone context to plant detail and seasonal tips.
+          </Text>
+          <ZonePicker value={preferences.zone} onChange={(zone) => update({ zone })} label="USDA zone" />
         </Card.Content>
       </Card>
 
@@ -100,7 +116,7 @@ export default function SettingsScreen() {
       <Card mode="contained" style={styles.card}>
         <List.Item
           title="Seasonal notifications"
-          description="Zone-based pest-season tips"
+          description="Region-based pest-season tips"
           left={(props) => <List.Icon {...props} icon="bell-outline" />}
           right={() => (
             <Switch

@@ -1,262 +1,38 @@
-import type { CatalogPlant } from '../models/types';
+import type { CatalogPlant, PlantCategory, RegionId } from '../models/types';
+import { CATALOG } from './regionalCatalog.generated';
 
 /**
- * Curated companion-planting knowledge base. Each entry pairs a plant with the
- * pests/critters it organically repels, its growing needs, and the USDA zone
- * range it tolerates. Sourced from the organic-gardening references cited in the
- * GardenGuard Conception & Planning document (Gardening.org, NCAT ATTRA). This
- * is intentionally a seeded, on-device dataset — no paid horticultural API.
+ * The growable-plant knowledge base, built from the real 6-region dataset (see
+ * scripts/buildCatalog.mjs and regionalCatalog.generated.ts). Each plant carries
+ * the regions it grows in and the pests that commonly affect it; companion
+ * remedies for those pests live in companions.ts.
  */
-export const CATALOG: CatalogPlant[] = [
-  {
-    id: 'marigold',
-    name: 'Marigold',
-    category: 'flower',
-    repels: ['nematodes', 'aphids', 'whiteflies', 'mexican-bean-beetles'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'Roots suppress root-knot nematodes; blooms repel aphids and whiteflies and attract ladybugs and hoverflies.',
-    goodWith: ['basil', 'nasturtium'],
-  },
-  {
-    id: 'lavender',
-    name: 'Lavender',
-    category: 'herb',
-    repels: ['mosquitoes', 'moths', 'fleas', 'deer', 'rabbits'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 5,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'Aromatic oils mask the scents that draw mosquitoes and moths, and the strong fragrance deters browsing deer and rabbits.',
-  },
-  {
-    id: 'garlic',
-    name: 'Garlic',
-    category: 'vegetable',
-    repels: ['aphids', 'japanese-beetles', 'carrot-flies', 'spider-mites'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 3,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'Sulfur compounds deter aphids, beetles, and spider mites — a classic underplanting for tomatoes and brassicas.',
-    goodWith: ['chives', 'onion'],
-  },
-  {
-    id: 'chives',
-    name: 'Chives',
-    category: 'herb',
-    repels: ['aphids', 'carrot-flies', 'japanese-beetles'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 3,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'Onion-family scent confuses carrot flies and repels aphids; pairs well with carrots and tomatoes.',
-    goodWith: ['garlic'],
-  },
-  {
-    id: 'basil',
-    name: 'Basil',
-    category: 'herb',
-    repels: ['flies', 'mosquitoes', 'aphids', 'tomato-hornworms'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'Strong aroma repels flies, mosquitoes, and hornworms; a staple tomato companion. Grown as an annual.',
-    goodWith: ['marigold', 'chives'],
-  },
-  {
-    id: 'oregano',
-    name: 'Oregano',
-    category: 'herb',
-    repels: ['cucumber-beetles', 'cabbage-loopers', 'aphids'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 4,
-    zoneMax: 10,
-    containerFriendly: true,
-    note: 'Spreading aromatic herb that deters cucumber beetles and cabbage loopers; useful as general pest cover.',
-  },
-  {
-    id: 'nasturtium',
-    name: 'Nasturtium',
-    category: 'flower',
-    repels: ['aphids', 'whiteflies', 'squash-bugs', 'cucumber-beetles'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'A trap crop that lures aphids and squash bugs away from vegetables; the flowers are edible. Annual.',
-    goodWith: ['marigold'],
-  },
-  {
-    id: 'mint',
-    name: 'Mint',
-    category: 'herb',
-    repels: ['ants', 'aphids', 'cabbage-moths', 'mice', 'fleas'],
-    sun: 'partial',
-    water: 'moderate',
-    zoneMin: 3,
-    zoneMax: 8,
-    containerFriendly: true,
-    note: 'Pungent oils deter ants, cabbage moths, and rodents. Grow in a pot — mint spreads aggressively in beds.',
-  },
-  {
-    id: 'rosemary',
-    name: 'Rosemary',
-    category: 'herb',
-    repels: ['cabbage-moths', 'carrot-flies', 'mexican-bean-beetles', 'deer'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 7,
-    zoneMax: 10,
-    containerFriendly: true,
-    note: 'Woody Mediterranean herb whose scent repels cabbage moths and bean beetles and discourages deer.',
-  },
-  {
-    id: 'catnip',
-    name: 'Catnip',
-    category: 'herb',
-    repels: ['aphids', 'squash-bugs', 'flea-beetles', 'mosquitoes', 'japanese-beetles'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 3,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'Its nepetalactone has been shown to repel mosquitoes and several beetles; extremely hardy (and cats love it).',
-  },
-  {
-    id: 'petunia',
-    name: 'Petunia',
-    category: 'flower',
-    repels: ['aphids', 'leafhoppers', 'asparagus-beetles', 'tomato-hornworms'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'Bright annual that repels leafhoppers and asparagus beetles; easy color for beds and pots.',
-  },
-  {
-    id: 'dill',
-    name: 'Dill',
-    category: 'herb',
-    repels: ['aphids', 'spider-mites', 'cabbage-loopers'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'Attracts predatory wasps and ladybugs that clear aphids and mites; let some plants flower. Annual.',
-  },
-  {
-    id: 'sage',
-    name: 'Sage',
-    category: 'herb',
-    repels: ['cabbage-moths', 'carrot-flies', 'flea-beetles', 'deer'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 4,
-    zoneMax: 10,
-    containerFriendly: true,
-    note: 'Drought-tolerant herb that deters cabbage moths and carrot flies and is rarely browsed by deer.',
-  },
-  {
-    id: 'thyme',
-    name: 'Thyme',
-    category: 'herb',
-    repels: ['cabbage-loopers', 'whiteflies'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 5,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'Low ground-cover herb that deters cabbage worms and whiteflies; works well as bed edging.',
-  },
-  {
-    id: 'onion',
-    name: 'Onion',
-    category: 'vegetable',
-    repels: ['aphids', 'carrot-flies', 'rabbits', 'slugs'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 3,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'Allium scent repels aphids and carrot flies and discourages rabbits and slugs from browsing nearby.',
-    goodWith: ['garlic'],
-  },
-  {
-    id: 'sunflower',
-    name: 'Sunflower',
-    category: 'flower',
-    repels: ['aphids'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: false,
-    note: 'Serves as an aphid trap crop and draws beneficial insects and birds that prey on garden pests. Annual.',
-  },
-  {
-    id: 'borage',
-    name: 'Borage',
-    category: 'herb',
-    repels: ['tomato-hornworms', 'cabbage-moths'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 2,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'Deters tomato hornworms and cabbage worms while attracting pollinators; a classic tomato and squash companion. Annual.',
-    goodWith: ['basil'],
-  },
-  {
-    id: 'chrysanthemum',
-    name: 'Chrysanthemum',
-    category: 'flower',
-    repels: ['japanese-beetles', 'ants', 'ticks', 'fleas', 'aphids'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 5,
-    zoneMax: 9,
-    containerFriendly: true,
-    note: 'A natural source of pyrethrin; repels Japanese beetles, ants, ticks, and fleas across the garden.',
-  },
-  {
-    id: 'yarrow',
-    name: 'Yarrow',
-    category: 'flower',
-    repels: ['aphids', 'deer'],
-    sun: 'full',
-    water: 'low',
-    zoneMin: 3,
-    zoneMax: 9,
-    containerFriendly: false,
-    note: 'Attracts ladybugs and lacewings that devour aphids; tough, drought-tolerant, and seldom touched by deer.',
-  },
-  {
-    id: 'lemongrass',
-    name: 'Lemongrass',
-    category: 'herb',
-    repels: ['mosquitoes', 'flies'],
-    sun: 'full',
-    water: 'moderate',
-    zoneMin: 8,
-    zoneMax: 11,
-    containerFriendly: true,
-    note: 'Contains the citronella oils used in mosquito repellents; grow in a pot and overwinter indoors in cooler zones.',
-  },
-];
+export { CATALOG } from './regionalCatalog.generated';
 
-export const CATALOG_BY_ID = new Map<string, CatalogPlant>(
-  CATALOG.map((p) => [p.id, p]),
-);
+export const CATALOG_BY_ID = new Map<string, CatalogPlant>(CATALOG.map((p) => [p.id, p]));
+
+export function catalogById(id: string | undefined): CatalogPlant | undefined {
+  return id ? CATALOG_BY_ID.get(id) : undefined;
+}
+
+/** True if the plant grows in the given region (or it isn't a catalog plant). */
+export function plantGrowsInRegion(plant: CatalogPlant, region: RegionId): boolean {
+  return plant.regions.includes(region);
+}
+
+/** Catalog plant ids that grow in a region — for fast region-fit checks. */
+export function regionPlantIds(region: RegionId): Set<string> {
+  return new Set(CATALOG.filter((p) => p.regions.includes(region)).map((p) => p.id));
+}
+
+/** Plants growable in a region, optionally filtered by category and search text. */
+export function plantsInRegion(
+  region: RegionId,
+  opts: { category?: PlantCategory; query?: string } = {},
+): CatalogPlant[] {
+  const q = opts.query?.trim().toLowerCase();
+  return CATALOG.filter((p) => p.regions.includes(region))
+    .filter((p) => (opts.category ? p.category === opts.category : true))
+    .filter((p) => (q ? p.name.toLowerCase().includes(q) : true))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

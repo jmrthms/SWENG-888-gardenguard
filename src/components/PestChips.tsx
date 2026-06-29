@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Chip, Text } from 'react-native-paper';
-import { PESTS, pestLabel } from '../data/pests';
+import { PESTS, getPest, pestIcon, pestLabel } from '../data/pests';
 
-/** Multi-select pest/critter chips for the Add/Edit form ("Repels"). */
+/** Multi-select pest/critter/disease chips for the Add/Edit form. */
 export function PestSelector({
   selected,
   onToggle,
@@ -23,7 +23,7 @@ export function PestSelector({
             mode={isOn ? 'flat' : 'outlined'}
             onPress={() => onToggle(pest.id)}
             style={styles.chip}
-            icon={pest.type === 'critter' ? 'rabbit' : 'bug'}
+            icon={pestIcon(pest.type)}
           >
             {pest.label}
           </Chip>
@@ -33,21 +33,21 @@ export function PestSelector({
   );
 }
 
-/** Read-only row of the pests a plant repels. */
-export function RepelsRow({ repels, max }: { repels: string[]; max?: number }) {
-  if (repels.length === 0) {
+/** Read-only row of the pests associated with a plant. */
+export function PestRow({ pests, max }: { pests: string[]; max?: number }) {
+  if (pests.length === 0) {
     return (
       <Text variant="bodySmall" style={styles.muted}>
         No pests tagged yet
       </Text>
     );
   }
-  const shown = max ? repels.slice(0, max) : repels;
-  const extra = max && repels.length > max ? repels.length - max : 0;
+  const shown = max ? pests.slice(0, max) : pests;
+  const extra = max && pests.length > max ? pests.length - max : 0;
   return (
     <View style={styles.wrap}>
       {shown.map((id) => (
-        <Chip key={id} compact mode="outlined" style={styles.chip} icon="shield-check">
+        <Chip key={id} compact mode="outlined" style={styles.chip} icon={pestIcon(getPest(id)?.type ?? 'insect')}>
           {pestLabel(id)}
         </Chip>
       ))}

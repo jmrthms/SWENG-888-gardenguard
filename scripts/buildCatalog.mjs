@@ -1,0 +1,166 @@
+// @ts-nocheck
+/**
+ * buildCatalog.mjs — one-time/regenerable importer for the GardenGuard dataset.
+ *
+ * Reads the 18 region JSON files ("Group 4 - GardenGuard Data Plus"), cleans the
+ * known data-quality issues, normalizes plant/pest names, and emits a typed,
+ * deduped TypeScript module the app consumes:
+ *
+ *   src/data/regionalCatalog.generated.ts
+ *
+ * Canonical model:
+ *   - CATALOG: one entry per distinct growable plant, carrying the set of regions
+ *     it grows in and the pests that commonly affect it (pest ids).
+ *   - PEST_REMEDIES: global pest -> companion-plant ids (the "natural_remedies"),
+ *     unioned across the whole dataset (the data treats this mapping as global).
+ *   - DATASET_PESTS: the distinct pests, with display labels.
+ *
+ * Run:  node scripts/buildCatalog.mjs
+ */
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { join, basename } from 'node:path';
+
+const SRC = '/Users/jomarthomas/Downloads/Group 4 - GardenGuard Data Plus';
+const OUT = new URL('../src/data/regionalCatalog.generated.ts', import.meta.url);
+
+const REGION_DIRS = {
+  'North Central': 'north_central',
+  Northeast: 'northeast',
+  Northwest: 'northwest',
+  'South Central': 'south_central',
+  Southeast: 'southeast',
+  Southwest: 'southwest',
+};
+
+const CATEGORY_FROM_FILE = (file) => {
+  const f = file.toLowerCase();
+  if (f.includes('flower')) return 'flower';
+  if (f.includes('herb')) return 'herb';
+  if (f.includes('vegetable')) return 'vegetable';
+  throw new Error(`Cannot derive category from ${file}`);
+};
+
+// Collapse the known name variants (survey-flagged) before slugging.
+const NAME_CANON = {
+  'Bee Balm': 'Bee Balm (Monarda)',
+  Monarda: 'Bee Balm (Monarda)',
+  Gaillardia: 'Blanket Flower (Gaillardia)',
+  'Indian Blanket (Gaillardia pulchella)': 'Blanket Flower (Gaillardia)',
+  'Geranium (Hardy)': 'Geranium',
+  'Root Weevils': 'Weevils',
+};
+
+const canonName = (n) => NAME_CANON[n.trim()] ?? n.trim();
+
+const slugify = (name) =>
+  canonName(name)
+    .replace(/\([^)]*\)/g, ' ') // drop parentheticals for the slug
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+// Tolerant JSON read: strip the stray `--> ...` annotation left in
+// North_Central_Flowers.JSON, then parse.
+function readJsonLoose(path) {
+  let raw = readFileSync(path, 'utf8');
+  raw = raw.replace(/-->[^\n\r]*/g, ''); // kill inline `--> Duplicate?` notes
+  return JSON.parse(raw);
+}
+
+/** @type {Map<string, {id:string,name:string,category:string,regions:Set<string>,pests:Set<string>}>} */
+const plants = new Map();
+/** @type {Map<string, {id:string,label:string}>} */
+const pestMeta = new Map();
+/** @type {Map<string, Set<string>>} pestId -> companion plant ids */
+const pestRemedies = new Map();
+
+let fileCount = 0;
+let rawEntryCount = 0;
+
+for (const [dir, regionId] of Object.entries(REGION_DIRS)) {
+  const dirPath = join(SRC, dir);
+  // Sort for deterministic output across platforms: Flowers < Herbs < Vegetables,
+  // so a plant listed under two categories (e.g. Yarrow, Bee Balm) is assigned
+  // its first-alphabetical category (flower) reproducibly, not by FS order.
+  for (const file of readdirSync(dirPath).sort()) {
+    if (!file.toLowerCase().endsWith('.json')) continue;
+    fileCount += 1;
+    const category = CATEGORY_FROM_FILE(file);
+    const entries = readJsonLoose(join(dirPath, file));
+    for (const entry of entries) {
+      rawEntryCount += 1;
+      const name = canonName(entry.name);
+      const id = slugify(name);
+      if (!plants.has(id)) {
+        plants.set(id, { id, name, category, regions: new Set(), pests: new Set() });
+      }
+      const plant = plants.get(id);
+      plant.regions.add(regionId);
+      // Prefer a non-parenthetical, fuller display name if we see one.
+      if (name.length > plant.name.length) plant.name = name;
+
+      for (const pe of entry.pests ?? []) {
+        const pestId = slugify(pe.name);
+        const label = canonName(pe.name);
+        if (!pestMeta.has(pestId)) pestMeta.set(pestId, { id: pestId, label });
+        plant.pests.add(pestId);
+        if (!pestRemedies.has(pestId)) pestRemedies.set(pestId, new Set());
+        for (const rem of pe.natural_remedies ?? []) {
+          pestRemedies.get(pestId).add(slugify(rem));
+        }
+      }
+    }
+  }
+}
+
+// Stable, sorted output.
+const catalog = [...plants.values()]
+  .map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    regions: [...p.regions].sort(),
+    pests: [...p.pests].sort(),
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const pests = [...pestMeta.values()].sort((a, b) => a.label.localeCompare(b.label));
+
+const remedies = Object.fromEntries(
+  [...pestRemedies.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => [k, [...v].sort()]),
+);
+
+const allRemedyIds = [...new Set(Object.values(remedies).flat())].sort();
+
+const header = `// AUTO-GENERATED by scripts/buildCatalog.mjs — do not edit by hand.
+// Source: "Group 4 - GardenGuard Data Plus" (18 region JSON files).
+// Regenerate with: node scripts/buildCatalog.mjs
+//
+// Stats: ${catalog.length} plants · ${pests.length} pests · ${allRemedyIds.length} companion remedies
+// (${rawEntryCount} raw entries across ${fileCount} files).
+
+import type { CatalogPlant } from '../models/types';
+
+`;
+
+const body =
+  `export const CATALOG: CatalogPlant[] = ${JSON.stringify(catalog, null, 2)};\n\n` +
+  `/** Distinct pests in the dataset (raw labels; types/overrides live in pests.ts). */\n` +
+  `export const DATASET_PESTS: { id: string; label: string }[] = ${JSON.stringify(pests, null, 2)};\n\n` +
+  `/** Global pest id -> companion-plant ids that repel it (the dataset's natural_remedies). */\n` +
+  `export const PEST_REMEDIES: Record<string, string[]> = ${JSON.stringify(remedies, null, 2)};\n\n` +
+  `/** Every companion/remedy plant id referenced by the dataset. */\n` +
+  `export const REMEDY_IDS: string[] = ${JSON.stringify(allRemedyIds, null, 2)};\n`;
+
+writeFileSync(OUT, header + body);
+
+// Console report.
+const byCat = catalog.reduce((m, p) => ((m[p.category] = (m[p.category] ?? 0) + 1), m), {});
+console.log(`✓ Wrote ${OUT.pathname}`);
+console.log(`  plants:   ${catalog.length}  ${JSON.stringify(byCat)}`);
+console.log(`  pests:    ${pests.length}`);
+console.log(`  remedies: ${allRemedyIds.length}  ${allRemedyIds.join(', ')}`);
+console.log(`  files:    ${fileCount}  raw entries: ${rawEntryCount}`);

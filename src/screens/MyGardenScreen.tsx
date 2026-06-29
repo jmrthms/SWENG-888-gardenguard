@@ -20,13 +20,14 @@ import { usePreferences } from '../context/PreferencesContext';
 import { PlantListItem } from '../components/PlantListItem';
 import { EmptyState } from '../components/EmptyState';
 import { pestLabel } from '../data/pests';
-import { zoneNumber } from '../data/zones';
+import { catalogById } from '../data/plantsCatalog';
+import { regionLabel } from '../data/regions';
 import { distanceMiles, formatDistance } from '../utils/geo';
 import { seasonalTip } from '../data/seasons';
 import type { Coordinates, Plant } from '../models/types';
 import type { GardenScreenNav } from '../navigation/types';
 
-type FilterMode = 'all' | 'zone' | 'near';
+type FilterMode = 'all' | 'region' | 'near';
 const NEAR_RADIUS_MI = 50;
 
 export default function MyGardenScreen() {
@@ -43,7 +44,7 @@ export default function MyGardenScreen() {
   const [snack, setSnack] = useState('');
   const [seeding, setSeeding] = useState(false);
 
-  // Live zone indicator in the header (matches the wireframe "Zone 8a").
+  // Live region indicator in the header (matches the wireframe location chip).
   useLayoutEffect(() => {
     nav.setOptions({
       headerRight: () => (
@@ -52,14 +53,16 @@ export default function MyGardenScreen() {
           style={styles.zoneChip}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={`Current zone ${preferences.zone}. Opens settings.`}
+          accessibilityLabel={`Current region ${regionLabel(preferences.region)}. Opens settings.`}
         >
           <MaterialCommunityIcons name="map-marker-radius" size={16} color={theme.colors.onPrimary} />
-          <Text style={[styles.zoneText, { color: theme.colors.onPrimary }]}>Zone {preferences.zone}</Text>
+          <Text style={[styles.zoneText, { color: theme.colors.onPrimary }]} numberOfLines={1}>
+            {regionLabel(preferences.region)}
+          </Text>
         </Pressable>
       ),
     });
-  }, [nav, preferences.zone, theme.colors.onPrimary]);
+  }, [nav, preferences.region, theme.colors.onPrimary]);
 
   const requestNearMe = useCallback(async () => {
     setLocating(true);
@@ -97,11 +100,10 @@ export default function MyGardenScreen() {
     }
   }, [seeding, seedSamples]);
 
-  const seasonal = useMemo(() => seasonalTip(preferences.zone), [preferences.zone]);
+  const seasonal = useMemo(() => seasonalTip(preferences.region), [preferences.region]);
 
   const data = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const userZone = zoneNumber(preferences.zone);
 
     let rows: { plant: Plant; distance?: number }[] = plants.map((plant) => ({ plant }));
 
@@ -110,12 +112,15 @@ export default function MyGardenScreen() {
         ({ plant }) =>
           plant.name.toLowerCase().includes(q) ||
           plant.locationLabel.toLowerCase().includes(q) ||
-          plant.repels.some((r) => pestLabel(r).toLowerCase().includes(q)),
+          plant.pests.some((p) => pestLabel(p).toLowerCase().includes(q)),
       );
     }
 
-    if (filter === 'zone' && !Number.isNaN(userZone)) {
-      rows = rows.filter(({ plant }) => userZone >= plant.zoneMin && userZone <= plant.zoneMax);
+    if (filter === 'region') {
+      rows = rows.filter(({ plant }) => {
+        const c = plant.catalogId ? catalogById(plant.catalogId) : undefined;
+        return c ? c.regions.includes(preferences.region) : true; // custom plants always shown
+      });
     }
 
     if (filter === 'near' && location) {
@@ -127,10 +132,10 @@ export default function MyGardenScreen() {
     }
 
     return rows;
-  }, [plants, query, filter, location, preferences.zone]);
+  }, [plants, query, filter, location, preferences.region]);
 
   const filterLabel =
-    filter === 'all' ? 'All plants' : filter === 'zone' ? `My zone (${preferences.zone})` : 'Near me';
+    filter === 'all' ? 'All plants' : filter === 'region' ? `My region` : 'Near me';
 
   if (loading) {
     return (
@@ -198,7 +203,7 @@ export default function MyGardenScreen() {
             }
           >
             <Menu.Item onPress={() => chooseFilter('all')} title="All plants" leadingIcon="format-list-bulleted" />
-            <Menu.Item onPress={() => chooseFilter('zone')} title={`My zone (${preferences.zone})`} leadingIcon="map-marker-radius" />
+            <Menu.Item onPress={() => chooseFilter('region')} title={`My region (${regionLabel(preferences.region)})`} leadingIcon="map-marker-radius" />
             <Menu.Item onPress={() => chooseFilter('near')} title="Near me" leadingIcon="crosshairs-gps" />
           </Menu>
           {locating && <ActivityIndicator size={18} style={styles.locating} color={theme.colors.primary} />}

@@ -1,11 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Preferences } from '../models/types';
 import { DEFAULT_ZONE } from '../data/zones';
+import { DEFAULT_REGION } from '../data/regions';
 
 const KEY = 'gardenguard:preferences:v1';
 
-/** Device preferences (F8): zone, units, theme, notifications via AsyncStorage. */
+/** Device preferences (F8): region, zone, units, theme, notifications via AsyncStorage. */
 export const DEFAULT_PREFERENCES: Preferences = {
+  region: DEFAULT_REGION,
   zone: DEFAULT_ZONE,
   units: 'imperial',
   themeMode: 'system',
