@@ -25,7 +25,7 @@ Group 4 — Anita Pitre · Christopher Allen · Jomar Thomas Almonte · Summer 2
 | UI | React Native Paper (Material Design 3) + `@expo/vector-icons` |
 | Local data | `expo-sqlite` (plant list) + `AsyncStorage` (preferences) |
 | Knowledge base | Curated **6-region** dataset (123 plants · 35 pests · 15 companions), generated into a typed module |
-| Maps & location | `react-native-maps` + `expo-location` |
+| Maps & location | **OpenStreetMap** via `react-native-webview` (Leaflet) — no API key — + `expo-location` |
 | Notifications | `expo-notifications` (local, region-based seasonal tips) |
 | Auth | Local on-device stub today → **AWS Cognito** (Amplify) at Module 5 |
 | Cloud (planned) | AWS AppSync (GraphQL) + DynamoDB sync |
@@ -56,11 +56,33 @@ Then:
 > sign-up and drives the catalog and recommendations. Add a plant (browse your region's catalog or type
 > your own), or open **Recommend** to get organic companions for a pest — or to protect a chosen plant.
 
-### Maps note
-`react-native-maps` renders in **Expo Go on Android** out of the box. For a **standalone / dev build**,
-add a Google Maps Android API key to `app.json` under `expo.android.config.googleMaps.apiKey`
-(restricted by package name + SHA-1 — see the team's private channel). On iOS it uses Apple Maps by
-default. Web is intentionally out of scope; the Map screen shows a list fallback there.
+### Maps (US-6) — OpenStreetMap, no API key
+The Map screen renders **OpenStreetMap** tiles with **Leaflet inside a `react-native-webview`**
+(`src/screens/mapHtml.ts`). This needs **no API key and works in Expo Go** out of the box — garden-bed
+and nursery markers, tap-a-bed → Plant Detail, "near me" filter, and "my location" all work. Web is out
+of scope — the Map screen shows a list fallback there.
+
+> OSM's public tile server is free under a [fair-use policy](https://operations.osmfoundation.org/policies/tiles/)
+> (fine for this project); a production app would point at a tile CDN (OpenFreeMap, MapTiler, etc.).
+
+**Optional — native Google Maps instead.** A Google key path is also scaffolded if you'd rather use
+native Google Maps: set `GOOGLE_MAPS_ANDROID_API_KEY` in `.env` (see `.env.example`); `app.config.js`
+injects it into `expo.android.config.googleMaps.apiKey` at build time. You'd then swap `MapScreen` back
+to `react-native-maps` and run a dev build (`npx expo run:android`) — it does **not** render in Expo Go.
+
+### Tests
+The pure data/logic layer (the recommendation engine, regional catalog, pests, seasons, geo helpers) is
+unit-tested with **Jest** (via `@swc/jest`, decoupled from the Metro/Expo build):
+
+```bash
+npm test          # run the suite
+npm run typecheck  # tsc --noEmit
+```
+
+Tests live in `src/**/__tests__/` (**45 tests / 7 suites**) and cover dataset integrity (counts, every
+pest→companion reference resolves), region-aware ranking (local companions first; remedy-only plants
+region-agnostic), companion suggestions, seasonal tips, the Haversine geo math, the Leaflet map-HTML
+builder (markers, OSM tiles, `<script>`-injection safety), and the `app.config.js` Maps-key injection.
 
 ---
 

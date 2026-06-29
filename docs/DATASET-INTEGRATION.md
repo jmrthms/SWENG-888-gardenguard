@@ -112,4 +112,6 @@ regionalCatalog.generated.ts   CATALOG · DATASET_PESTS · PEST_REMEDIES   (gene
 | F8 Region & preferences | ✅ | Region (primary) + zone/units/theme/notifications. |
 | Secondary: pest-of-season tips | ✅ | Region-worded, dataset-backed companion in every tip. |
 | Stretch: notifications · accessibility · search | ✅ | All retained and rewired to the region model. |
+| Map (US-6) | ✅ | **OpenStreetMap via Leaflet in a `react-native-webview`** — no API key, renders in Expo Go; bed/nursery markers, tap→detail, near-me, my-location. (Optional Google path still scaffolded in `app.config.js`.) |
+| Unit tests | ✅ | Jest (`@swc/jest`) — **45 tests / 7 suites**: dataset integrity, region-aware ranking, seasonal tips, geo math, Leaflet map-HTML builder, Maps-key config. `npm test`. |
 | Outstanding | ⏳ | Cognito/AppSync sync; live nursery feed; signed APK for the deliverable. |
